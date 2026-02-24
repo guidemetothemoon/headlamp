@@ -18,6 +18,7 @@ import 'vitest-canvas-mock';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import Deployment from '../../../lib/k8s/deployment';
 import Pod from '../../../lib/k8s/pod';
+import StatefulSet from '../../../lib/k8s/statefulSet';
 import { TestContext } from '../../../test';
 import { LogsButton } from './LogsButton';
 
@@ -87,6 +88,11 @@ vi.mock('../../../lib/k8s/replicaSet', () => ({
   __esModule: true,
 }));
 
+vi.mock('../../../lib/k8s/statefulSet', () => ({
+  default: class StatefulSet extends MockKubeObject {},
+  __esModule: true,
+}));
+
 vi.mock('../../../lib/k8s', () => ({}));
 
 vi.mock('../../../lib/k8s/api/v2/fetch', () => ({
@@ -117,6 +123,38 @@ const deploymentData = {
   },
   spec: {
     selector: { matchLabels: { app: 'test-app' } },
+    updateStrategy: {
+      type: 'RollingUpdate',
+      rollingUpdate: {
+        partition: 0,
+      },
+    },
+    template: {
+      spec: {
+        nodeName: 'test-node',
+        containers: [{ name: 'nginx', image: 'nginx:latest', imagePullPolicy: 'Always' }],
+      },
+    },
+  },
+  status: {},
+};
+
+const statefulSetData = {
+  kind: 'StatefulSet',
+  metadata: {
+    name: 'test-statefulset',
+    namespace: 'default',
+    creationTimestamp: '2024-01-01T00:00:00Z',
+    uid: 'sts-123',
+  },
+  spec: {
+    selector: { matchLabels: { app: 'test-app' } },
+    updateStrategy: {
+      type: 'RollingUpdate',
+      rollingUpdate: {
+        partition: 0,
+      },
+    },
     template: {
       spec: {
         nodeName: 'test-node',
@@ -163,6 +201,16 @@ describe('LogsButton', () => {
     render(
       <TestContext>
         <LogsButton item={new Deployment(deploymentData)} />
+      </TestContext>
+    );
+
+    expect(screen.getByLabelText('translation|Show logs')).toBeInTheDocument();
+  });
+
+  it('renders the logs button for a StatefulSet', () => {
+    render(
+      <TestContext>
+        <LogsButton item={new StatefulSet(statefulSetData)} />
       </TestContext>
     );
 

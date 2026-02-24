@@ -34,6 +34,7 @@ import Deployment from '../../../lib/k8s/deployment';
 import { KubeObject } from '../../../lib/k8s/KubeObject';
 import Pod from '../../../lib/k8s/pod';
 import ReplicaSet from '../../../lib/k8s/replicaSet';
+import StatefulSet from '../../../lib/k8s/statefulSet';
 import { Activity } from '../../activity/Activity';
 import ActionButton from '../ActionButton';
 import { LogViewer } from '../LogViewer';
@@ -81,7 +82,12 @@ function LogsButtonContent({ item }: LogsButtonProps) {
 
   // Fetch related pods.
   async function getRelatedPods(): Promise<Pod[]> {
-    if (item instanceof Deployment || item instanceof ReplicaSet || item instanceof DaemonSet) {
+    if (
+      item instanceof Deployment ||
+      item instanceof ReplicaSet ||
+      item instanceof DaemonSet ||
+      item instanceof StatefulSet
+    ) {
       try {
         let labelSelector = '';
         const selector = item.spec.selector;
@@ -98,6 +104,8 @@ function LogsButtonContent({ item }: LogsButtonProps) {
               ? 'deployment'
               : item instanceof ReplicaSet
               ? 'replicaset'
+              : item instanceof StatefulSet
+              ? 'statefulset'
               : 'daemonset';
           throw new Error(
             t('translation|No label selectors found for this {{type}}', { type: resourceType })
@@ -143,7 +151,12 @@ function LogsButtonContent({ item }: LogsButtonProps) {
 
   // Handler for initial logs button click
   async function onMount() {
-    if (item instanceof Deployment || item instanceof ReplicaSet || item instanceof DaemonSet) {
+    if (
+      item instanceof Deployment ||
+      item instanceof ReplicaSet ||
+      item instanceof DaemonSet ||
+      item instanceof StatefulSet
+    ) {
       try {
         const fetchedPods = await getRelatedPods();
         if (fetchedPods.length > 0) {
@@ -535,7 +548,10 @@ export function LogsButton({ item }: LogsButtonProps) {
   return (
     <>
       {/* Show logs button for supported workload types */}
-      {(item instanceof Deployment || item instanceof ReplicaSet || item instanceof DaemonSet) && (
+      {(item instanceof Deployment ||
+        item instanceof ReplicaSet ||
+        item instanceof DaemonSet ||
+        item instanceof StatefulSet) && (
         <ActionButton
           icon="mdi:file-document-box-outline"
           onClick={onClick}
