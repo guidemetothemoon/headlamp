@@ -123,11 +123,8 @@ const deploymentData = {
   },
   spec: {
     selector: { matchLabels: { app: 'test-app' } },
-    updateStrategy: {
+    strategy: {
       type: 'RollingUpdate',
-      rollingUpdate: {
-        partition: 0,
-      },
     },
     template: {
       spec: {
@@ -224,7 +221,7 @@ describe('LogsButton', () => {
       </TestContext>
     );
 
-    expect(screen.queryByLabelText('Show logs')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('translation|Show logs')).not.toBeInTheDocument();
   });
 
   it('launches Activity with correct metadata on click', () => {

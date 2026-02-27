@@ -27,7 +27,9 @@ import { Terminal as XTerminal } from '@xterm/xterm';
 import { useSnackbar } from 'notistack';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { labelSelectorToQuery } from '../../../lib/k8s';
 import { clusterFetch } from '../../../lib/k8s/api/v2/fetch';
+import { makeUrl } from '../../../lib/k8s/api/v2/makeUrl';
 import { KubeContainerStatus } from '../../../lib/k8s/cluster';
 import DaemonSet from '../../../lib/k8s/daemonSet';
 import Deployment from '../../../lib/k8s/deployment';
@@ -89,14 +91,7 @@ function LogsButtonContent({ item }: LogsButtonProps) {
       item instanceof StatefulSet
     ) {
       try {
-        let labelSelector = '';
-        const selector = item.spec.selector;
-
-        if (selector.matchLabels) {
-          labelSelector = Object.entries(selector.matchLabels)
-            .map(([key, value]) => `${key}=${value}`)
-            .join(',');
-        }
+        const labelSelector = labelSelectorToQuery(item.spec.selector);
 
         if (!labelSelector) {
           const resourceType =
@@ -112,8 +107,10 @@ function LogsButtonContent({ item }: LogsButtonProps) {
           );
         }
 
+        const queryParams = { labelSelector };
+
         const response = await clusterFetch(
-          `/api/v1/namespaces/${item.metadata.namespace}/pods?labelSelector=${labelSelector}`,
+          makeUrl(`/api/v1/namespaces/${item.metadata.namespace}/pods`, queryParams),
           { cluster: item.cluster }
         ).then(it => it.json());
 
