@@ -603,10 +603,12 @@ export function ConditionsTable(props: ConditionsTableProps) {
       label: string;
       getter: (arg: KubeCondition) => void;
       hide?: boolean;
+      gridTemplate?: number | string;
     }[] = [
       {
         label: t('Condition'),
         getter: makeStatusLabel,
+        gridTemplate: 'min-content',
       },
       {
         label: t('translation|Status'),
@@ -1591,11 +1593,12 @@ export function ContainerInfo(props: ContainerInfoProps) {
         name: t('Ports'),
         value: (
           <Grid container>
-            {container.ports?.map(({ containerPort, protocol }, index) => (
+            {container.ports?.map(({ containerPort, protocol, name }, index) => (
               <>
                 <Grid item xs={12} key={`port_line_${index}`}>
                   <Box display="flex" alignItems={'center'}>
                     <Box px={0.5} minWidth={120}>
+                      {name && <ValueLabel>{`${name} `}</ValueLabel>}
                       <ValueLabel>{`${protocol}:`}</ValueLabel>
                       <ValueLabel>{containerPort}</ValueLabel>
                     </Box>
@@ -1659,10 +1662,15 @@ export function OwnedPodsSection(props: OwnedPodsSectionProps) {
     fieldSelector: resource.kind === 'Node' ? `spec.nodeName=${resource.metadata.name}` : undefined,
     cluster: resource.cluster,
   };
+  const podMetricsQueryData = {
+    ...queryData,
+    // The metrics.k8s.io pod metrics list endpoint does not support spec.nodeName field selectors.
+    fieldSelector: undefined,
+  };
 
   const { items: pods, errors } = Pod.useList(queryData);
   const { items: podMetrics } = PodMetrics.useList({
-    ...queryData,
+    ...podMetricsQueryData,
     refetchInterval: METRIC_REFETCH_INTERVAL_MS,
   });
   const onlyOneNamespace = !!resource.metadata.namespace || resource.kind === 'Namespace';
